@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'pea_site_photo_report_v1';
 
-// ข้อมูลเริ่มต้นตามเอกสารตัวอย่าง
+// ข้อมูลเริ่มต้น (เว้นว่างช่อง Site ให้กรอกเอง)
 function getDefaultData() {
   return {
     logoDataUrl: null,
@@ -8,7 +8,7 @@ function getDefaultData() {
       {
         id: crypto.randomUUID(),
         reportTitle: 'รายงานภาพถ่ายผลการปฏิบัติงานบำรุงรักษาระบบไฟฟ้า',
-        siteName: 'Site : บริษัท ดับบลิว เอ็ม เอส ดีโป จำกัด',
+        siteName: '',
         sectionTitle: 'Main Distribution Board : MDB',
         footerLeft: 'การไฟฟ้าส่วนภูมิภาค (Provincial Electricity Authority)',
         cards: [
@@ -43,10 +43,9 @@ function getDefaultData() {
 }
 
 let reportState = loadState();
-let activeWebcamTarget = null; // { pageIndex, cardIndex }
+let activeWebcamTarget = null;
 let webcamStream = null;
 
-// โหลดข้อมูลจาก LocalStorage
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -62,7 +61,6 @@ function loadState() {
   return getDefaultData();
 }
 
-// บันทึกข้อมูลลง LocalStorage
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reportState));
@@ -80,7 +78,6 @@ function saveState() {
   }
 }
 
-// บีบอัดรูปภาพอัตโนมัติให้คมชัดและไม่กินพื้นที่ LocalStorage เกินไป
 function processImageFile(file, maxWidth = 1400, quality = 0.85) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -107,7 +104,6 @@ function processImageFile(file, maxWidth = 1400, quality = 0.85) {
   });
 }
 
-// สร้าง HTML สำหรับโลโก้
 function renderLogoHtml() {
   if (reportState.logoDataUrl) {
     return `<img src="${reportState.logoDataUrl}" alt="Company Logo" class="logo-preview" title="คลิกเพื่อเปลี่ยนโลโก้" />`;
@@ -123,7 +119,6 @@ function renderLogoHtml() {
   `;
 }
 
-// วาดหน้ากระดาษ A4 ทั้งหมด
 function renderReport() {
   const container = document.getElementById('pagesContainer');
   container.innerHTML = '';
@@ -143,9 +138,7 @@ function renderReport() {
         return `
           <div class="photo-card ${isLastRow ? 'last-row' : ''}">
             <div class="photo-slot ${card.image ? 'has-image' : ''}" data-page="${pageIndex}" data-card="${cardIndex}">
-              <!-- Input เลือกรูปจากเครื่อง -->
               <input type="file" accept="image/*" class="input-gallery" data-page="${pageIndex}" data-card="${cardIndex}" hidden />
-              <!-- Input เปิดกล้องถ่ายรูปโดยตรง (มือถือ/แท็บเล็ต) -->
               <input type="file" accept="image/*" capture="environment" class="input-camera" data-page="${pageIndex}" data-card="${cardIndex}" hidden />
 
               ${
@@ -176,7 +169,7 @@ function renderReport() {
             </div>
 
             <div class="photo-caption-bar">
-              <div contenteditable="true" data-field="caption" data-page="${pageIndex}" data-card="${cardIndex}">${escapeHtml(card.caption)}</div>
+              <div contenteditable="true" data-field="caption" data-page="${pageIndex}" data-card="${cardIndex}" data-placeholder="ระบุคำบรรยายภาพ">${escapeHtml(card.caption)}</div>
             </div>
           </div>
         `;
@@ -199,14 +192,14 @@ function renderReport() {
         </div>
 
         <div class="header-info">
-          <div class="report-title" contenteditable="true" data-field="reportTitle" data-page="${pageIndex}">${escapeHtml(page.reportTitle)}</div>
-          <div class="site-line" contenteditable="true" data-field="siteName" data-page="${pageIndex}">${escapeHtml(page.siteName)}</div>
+          <div class="report-title" contenteditable="true" data-field="reportTitle" data-page="${pageIndex}" data-placeholder="หัวข้อรายงาน">${escapeHtml(page.reportTitle)}</div>
+          <div class="site-line" contenteditable="true" data-field="siteName" data-page="${pageIndex}" data-placeholder="Site : กรอกชื่อสถานที่ / บริษัทลูกค้า">${escapeHtml(page.siteName)}</div>
         </div>
       </div>
 
       <div class="report-frame">
         <div class="section-banner">
-          <span contenteditable="true" data-field="sectionTitle" data-page="${pageIndex}">${escapeHtml(page.sectionTitle)}</span>
+          <span contenteditable="true" data-field="sectionTitle" data-page="${pageIndex}" data-placeholder="หัวข้อหมวดงาน">${escapeHtml(page.sectionTitle)}</span>
         </div>
         <div class="photo-grid">
           ${cardsHtml}
@@ -214,7 +207,7 @@ function renderReport() {
       </div>
 
       <div class="report-footer">
-        <span contenteditable="true" data-field="footerLeft" data-page="${pageIndex}">${escapeHtml(page.footerLeft)}</span>
+        <span contenteditable="true" data-field="footerLeft" data-page="${pageIndex}" data-placeholder="ข้อความท้ายกระดาษ">${escapeHtml(page.footerLeft)}</span>
         <span>หน้า ${pageIndex + 1} / ${reportState.pages.length}</span>
       </div>
     `;
@@ -232,14 +225,12 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
-// ผูก Event กับ Element ที่สร้างขึ้นใหม่
 function bindDynamicEvents() {
-  // แก้ไขข้อความแบบ Inline
   document.querySelectorAll('[contenteditable="true"]').forEach((el) => {
     el.addEventListener('input', (e) => {
       const pageIdx = Number(e.target.dataset.page);
       const field = e.target.dataset.field;
-      const text = e.target.innerText.trim();
+      const text = e.target.innerText;
 
       if (field === 'caption') {
         const cardIdx = Number(e.target.dataset.card);
@@ -251,7 +242,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // เปลี่ยนโลโก้
   document.querySelectorAll('.logo-box').forEach((box) => {
     const fileInput = box.querySelector('.input-logo');
     box.addEventListener('click', (e) => {
@@ -266,7 +256,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // คลิกพื้นที่ว่างในช่องรูปภาพ -> เลือกรูปทันที
   document.querySelectorAll('.photo-slot').forEach((slot) => {
     slot.addEventListener('click', (e) => {
       if (e.target.closest('button') || e.target.tagName === 'INPUT') return;
@@ -275,7 +264,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // ปุ่มเลือกรูปจากแกลเลอรี/ไฟล์
   document.querySelectorAll('.btn-pick-gallery').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -284,7 +272,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // ปุ่มเปิดกล้องถ่ายรูปโดยตรง (Mobile/Tablet)
   document.querySelectorAll('.btn-pick-camera').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -293,7 +280,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // รับไฟล์จาก Input ทั้งแบบ Gallery และ Camera
   document.querySelectorAll('.input-gallery, .input-camera').forEach((input) => {
     input.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
@@ -307,7 +293,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // เปิดกล้องเว็บแคมผ่าน getUserMedia
   document.querySelectorAll('.btn-open-webcam').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -315,7 +300,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // สลับโหมด Fit / Cover
   document.querySelectorAll('.btn-toggle-fit').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -328,7 +312,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // ลบรูปภาพออกจากช่อง
   document.querySelectorAll('.btn-remove-img').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -340,7 +323,6 @@ function bindDynamicEvents() {
     });
   });
 
-  // ลบหน้า A4
   document.querySelectorAll('.btn-delete-page').forEach((btn) => {
     btn.addEventListener('click', () => {
       const p = Number(btn.dataset.page);
@@ -352,7 +334,6 @@ function bindDynamicEvents() {
   });
 }
 
-// ================= Webcam Functions =================
 async function openWebcamModal(pageIndex, cardIndex) {
   activeWebcamTarget = { pageIndex, cardIndex };
   const modal = document.getElementById('webcamModal');
@@ -407,8 +388,6 @@ document.getElementById('btnCaptureWebcam').addEventListener('click', () => {
 document.getElementById('btnCloseWebcam').addEventListener('click', closeWebcamModal);
 document.getElementById('btnCancelWebcam').addEventListener('click', closeWebcamModal);
 
-// ================= Toolbar Actions =================
-// เพิ่มแถวรูปภาพ (2 ช่อง) ในหน้าสุดท้าย
 document.getElementById('btnAddRow').addEventListener('click', () => {
   const lastPage = reportState.pages[reportState.pages.length - 1];
   const nextNum = lastPage.cards.length + 1;
@@ -420,7 +399,6 @@ document.getElementById('btnAddRow').addEventListener('click', () => {
   renderReport();
 });
 
-// ลบแถวสุดท้าย (2 ช่อง) ในหน้าสุดท้าย
 document.getElementById('btnRemoveRow').addEventListener('click', () => {
   const lastPage = reportState.pages[reportState.pages.length - 1];
   if (lastPage.cards.length > 2) {
@@ -430,7 +408,6 @@ document.getElementById('btnRemoveRow').addEventListener('click', () => {
   }
 });
 
-// เพิ่มหน้า A4 ใหม่ (คัดลอกหัว Site/หน่วยงานจากหน้าก่อนหน้าให้อัตโนมัติ)
 document.getElementById('btnAddPage').addEventListener('click', () => {
   const prevPage = reportState.pages[reportState.pages.length - 1];
   reportState.pages.push({
@@ -450,7 +427,6 @@ document.getElementById('btnAddPage').addEventListener('click', () => {
   renderReport();
 });
 
-// โหลดข้อมูลตัวอย่างเริ่มต้น
 document.getElementById('btnLoadSample').addEventListener('click', () => {
   if (confirm('ต้องการรีเซ็ตข้อความกลับเป็นค่าเริ่มต้นตามเอกสารตัวอย่างหรือไม่?')) {
     reportState = getDefaultData();
@@ -459,7 +435,6 @@ document.getElementById('btnLoadSample').addEventListener('click', () => {
   }
 });
 
-// ล้างข้อมูลทั้งหมด (คงโครงสร้าง 4 ช่องว่างไว้)
 document.getElementById('btnClearAll').addEventListener('click', () => {
   if (confirm('ต้องการล้างรูปภาพและข้อความทั้งหมดใช่หรือไม่?')) {
     reportState = {
@@ -468,7 +443,7 @@ document.getElementById('btnClearAll').addEventListener('click', () => {
         {
           id: crypto.randomUUID(),
           reportTitle: 'รายงานภาพถ่ายผลการปฏิบัติงาน',
-          siteName: 'Site : ระบุชื่อสถานที่ / บริษัทลูกค้า',
+          siteName: '',
           sectionTitle: 'หัวข้อหมวดงาน / ชื่อตู้ไฟฟ้า',
           footerLeft: 'การไฟฟ้าส่วนภูมิภาค (Provincial Electricity Authority)',
           cards: [
@@ -485,7 +460,6 @@ document.getElementById('btnClearAll').addEventListener('click', () => {
   }
 });
 
-// Export JSON
 document.getElementById('btnExportJson').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(reportState, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -496,7 +470,6 @@ document.getElementById('btnExportJson').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// Import JSON
 document.getElementById('inputImportJson').addEventListener('change', (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -519,10 +492,8 @@ document.getElementById('inputImportJson').addEventListener('change', (e) => {
   e.target.value = '';
 });
 
-// พิมพ์ / บันทึก PDF
 document.getElementById('btnPrint').addEventListener('click', () => {
   window.print();
 });
 
-// เริ่มต้นแสดงผล
 renderReport();
