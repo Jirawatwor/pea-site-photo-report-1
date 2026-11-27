@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PEA Site Photo Report - รายงานภาพถ่ายการปฏิบัติงาน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- แถบเครื่องมือควบคุม (ซ่อนอัตโนมัติตอนสั่งพิมพ์) -->
+  <header class="toolbar no-print">
+    <div class="toolbar-brand">
+      <span class="badge-pea">PEA REPORT</span>
+      <h1>ระบบจัดทำรายงานภาพหน้างาน (A4)</h1>
+    </div>
+
+    <div class="toolbar-actions">
+      <button type="button" class="btn btn-primary" id="btnAddRow">
+        + เพิ่มแถวรูปภาพ (2 ช่อง)
+      </button>
+      <button type="button" class="btn btn-outline" id="btnRemoveRow">
+        - ลบแถวสุดท้าย
+      </button>
+      <button type="button" class="btn btn-outline" id="btnAddPage">
+        + เพิ่มหน้า A4 ใหม่
+      </button>
+      <div class="divider"></div>
+      <button type="button" class="btn btn-outline" id="btnLoadSample">
+        โหลดข้อมูลตัวอย่าง
+      </button>
+      <button type="button" class="btn btn-danger-outline" id="btnClearAll">
+        ล้างข้อมูล
+      </button>
+      <div class="divider"></div>
+      <button type="button" class="btn btn-outline" id="btnExportJson">
+        Export JSON
+      </button>
+      <label class="btn btn-outline file-btn">
+        Import JSON
+        <input type="file" id="inputImportJson" accept="application/json" hidden />
+      </label>
+      <button type="button" class="btn btn-print" id="btnPrint">
+        🖨️ พิมพ์ / บันทึก PDF
+      </button>
+    </div>
+  </header>
+
+  <div class="status-bar no-print">
+    <span>💡 คลิกที่ข้อความใดก็ได้เพื่อแก้ไขโดยตรง • คลิกที่กรอบรูปเพื่อเลือกรูปหรือเปิดกล้องถ่ายรูป</span>
+    <span id="saveStatus" class="save-status">บันทึกอัตโนมัติแล้ว</span>
+  </div>
+
+  <!-- พื้นที่จำลองกระดาษ A4 -->
+  <main id="pagesContainer" class="pages-container"></main>
+
+  <!-- Modal เปิดกล้องเว็บแคม (สำหรับ PC / Notebook) -->
+  <div id="webcamModal" class="modal-backdrop no-print hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📷 ถ่ายภาพจากกล้อง</h3>
+        <button type="button" class="btn-close" id="btnCloseWebcam">&times;</button>
+      </div>
+      <div class="modal-body">
+        <video id="webcamVideo" autoplay playsinline></video>
+        <canvas id="webcamCanvas" hidden></canvas>
+        <p id="webcamError" class="webcam-error hidden"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="btnCancelWebcam">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" id="btnCaptureWebcam">📸 ถ่ายภาพและใส่ลงช่อง</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
