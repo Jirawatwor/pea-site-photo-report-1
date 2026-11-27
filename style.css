@@ -315,6 +315,12 @@ body {
   box-shadow: 0 0 0 2px var(--pea-purple);
 }
 
+[contenteditable="true"]:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  font-weight: 500;
+}
+
 /* ================= Section Banner & Grid ================= */
 .report-frame {
   border: 1.5px solid var(--border-dark);
@@ -776,5 +782,9 @@ body {
   [contenteditable="true"] {
     box-shadow: none !important;
     background: transparent !important;
+  }
+
+  [contenteditable="true"]:empty::before {
+    content: none;
   }
 }
